@@ -1,0 +1,1 @@
+/* Message structures will be defined */
