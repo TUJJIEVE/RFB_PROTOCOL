@@ -18,7 +18,7 @@
 #include <vector>
 #include "threadpool.h"
 #include "messages.h"
-
+#include "cache.h"
 using namespace std;
 
 #define NUM_THREADS 10
@@ -40,7 +40,7 @@ class Server{
         void prepareRect(Rectangle &);
         ServerInit prepareInit(int);
         void listenConnections();
-
+        Cache frameCaches;
         int numConnected;
         vector<int> activeSockets;
         queue<int> freeSockets;

@@ -22,10 +22,13 @@ struct PixelFormat{
 
 
 struct ServerInit{
+
+    bool isControl;
     int bufferWidth;
     int bufferHeight;
     struct PixelFormat pf;
     char name[200];
+
 };
 
 struct SetPixelFormat{
@@ -44,6 +47,27 @@ struct SetEncodings{
     struct Encodings encoding ;
 };
 
+struct Rectangle{
+    
+    int x_position;
+    int y_position;
+    int width;
+    int height;
+    int encodingType;
+    char info[200];
+    Rectangle();
+    Rectangle(int x_pos,int y_pos,int w,int h){
+        x_position = x_pos;
+        y_position = y_pos;
+        width = w;
+        height = h;
+    }
+    bool operator==(const Rectangle&rhs){
+        return (this->x_position == rhs.x_position && this->y_position == rhs.y_position
+                && this->height == rhs.height && this->width == rhs.width);
+    }
+};
+
 struct FrameBufferUpdateRequest{
     char messageType = '3';
     bool incremental;
@@ -55,16 +79,19 @@ struct FrameBufferUpdateRequest{
 
 struct KeyEvent{
     char messageType = '4';
+
     bool downFlag;
     int key;
 };
+
 
 struct PointerEvent{
     char messageType  = '5';
     char buttonMask[8];
     int x_position;
     int y_position;
-
+    bool isMoved = false;
+    bool isPressed = false;
 };
 
 struct ClientCutText{
@@ -79,11 +106,10 @@ struct ClientCutText{
 struct FrameBufferUpdate{
     char messageType = '0';
     int numRectangles;
-    int x_position;
-    int y_position;
-    int width;
-    int height;
-    int ecodingType;
+    Rectangle responseRect;
+    FrameBufferUpdate(int num){
+        numRectangles = num;
+    }    
 };
 
 struct SetColorMapEntries{
@@ -123,8 +149,9 @@ struct ClientMessage{
     KeyEvent key;
     PointerEvent pointer;
     ClientCutText cutText;
+    bool isShuttingDown = false;
 };
 
 struct Encodings{
-    
+
 };

@@ -47,6 +47,17 @@ ServerInit Server::prepareInit(int sock){
 
 void Server::prepareRect(Rectangle &rect){
     // read frame buffer and then fill the info into the rectangle object
+    Rectangle * temp = frameCaches.lookup(rect);
+    if (temp == nullptr){
+        // not present in the cache
+        // fill in the info 
+
+    }
+    else{
+        auto rectangle = *temp;
+        strcpy(rect.info,rectangle.info);
+
+    }
 
 
 }
@@ -84,8 +95,10 @@ int Server::frameSending(int connectedSock){
                     // send the complete info 
                     Rectangle queriedRect(cliMessage.request.x_position,cliMessage.request.y_position,cliMessage.request.width,cliMessage.request.height);
                     prepareRect(queriedRect);
-                    /// Make a caching mechanism to store the already asked 
-                    
+                    // Make a caching mechanism to store the already asked 
+                    FrameBufferUpdate response(1);
+                    response.responseRect = queriedRect;
+                    // send the responseRect
                 }
             }
         }
