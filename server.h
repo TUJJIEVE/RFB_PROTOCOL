@@ -33,16 +33,17 @@ class Server{
         Server(int numFreeSocks);
         void initiate();
         int handshake(int);
-        
+        int frameSending(int); 
 
 
     private:
-        
+        void prepareRect(Rectangle &);
+        ServerInit prepareInit(int);
+        void listenConnections();
+
         int numConnected;
         vector<int> activeSockets;
-        
         queue<int> freeSockets;
-        void listenConnections();
         int firstClient;
         ThreadPool tPool;
         bool isMutliMode;

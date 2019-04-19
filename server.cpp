@@ -29,13 +29,91 @@ Server::Server(int freeSocks){
 
 }
 
+ServerInit Server::prepareInit(int sock){
+    ServerInit initMessage;
+    if (sock == firstClient){
+        // give him the control rights
+        
+        initMessage.isControl = true;
+        // set parameters for the message
+
+    }
+    else{
+        // give the client only screen sharing rights
+        initMessage.isControl = false;
+        // set the parameters of the message
+    }
+}
+
+void Server::prepareRect(Rectangle &rect){
+    // read frame buffer and then fill the info into the rectangle object
+
+
+}
+
+int Server::frameSending(int connectedSock){
+    int recvCount = 0;
+    ClientMessage cliMessage;
+    fcntl(connectedSock,F_SETFL,O_NONBLOCK);
+    while (true){
+        recvCount = recv(connectedSock,&cliMessage,sizeof(cliMessage),0);
+        
+        if (recvCount>0){
+            
+            if (cliMessage.isShuttingDown){
+                // start shutting sequence.
+            
+                break;
+            }
+
+            if (cliMessage.key.downFlag){
+                // key event happened
+
+            }
+            else if (cliMessage.pointer.isMoved || cliMessage.pointer.isPressed){
+                // Mouse poiner event happened
+
+            }
+
+            else{
+                if (cliMessage.request.incremental){
+                    /// send on lt if it's changed
+                
+                }
+                else{
+                    // send the complete info 
+                    Rectangle queriedRect(cliMessage.request.x_position,cliMessage.request.y_position,cliMessage.request.width,cliMessage.request.height);
+                    prepareRect(queriedRect);
+                    /// Make a caching mechanism to store the already asked 
+                    
+                }
+            }
+        }
+
+    }
+
+
+
+
+
+}
+
 int Server::handshake(int connectedSock){
     // Initial handshake messages to take place here
     // If it's not the first client then tell the client you are only screen sharing
     
-    
+    ServerInit initMessage = prepareInit(connectedSock);
 
+    int sendcount = 0;
+    while(sendcount<=0){
+        sendcount = send(connectedSock,(void *)&initMessage,sizeof(initMessage));
+    }
 
+    serverJob frameJob = std::bind(&Server::frameSending,this,connectedSock);
+    pair<serverJob,int> job = make_pair(frameJob,connectedSock);
+    tPool.addJobs(1,job);
+
+    return 0;
 
 }
 
