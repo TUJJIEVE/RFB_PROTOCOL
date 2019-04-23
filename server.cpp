@@ -45,25 +45,22 @@ ServerInit Server::prepareInit(int sock){
     }
 }
 
-void Server::prepareRect(Rectangle &rect){
+std::vector<std::string> Server::prepareRect(Rectangle *rect,int numRectangles){
     // read frame buffer and then fill the info into the rectangle object
-    Rectangle * temp = frameCaches.lookup(rect);
-    if (temp == nullptr){
-        // not present in the cache
-        // fill in the info 
+    std::vector<std::string> resposne;
+    for (int i=0;i<numRectangles;i++){
+        // if possible implement caching mechanism
 
-    }
-    else{
-        auto rectangle = *temp;
-        strcpy(rect.info,rectangle.info);
+        // now prepare the rectangles and fill the into the resonse array        
 
     }
 
-
+    return 
 }
 
 int Server::frameSending(int connectedSock){
     int recvCount = 0;
+    int sendcount = 0 , recvcount = 0;
     ClientMessage cliMessage;
     fcntl(connectedSock,F_SETFL,O_NONBLOCK);
     while (true){
@@ -93,12 +90,19 @@ int Server::frameSending(int connectedSock){
                 }
                 else{
                     // send the complete info 
-                    Rectangle queriedRect(cliMessage.request.x_position,cliMessage.request.y_position,cliMessage.request.width,cliMessage.request.height);
-                    prepareRect(queriedRect);
+                    //Rectangle queriedRect(cliMessage.request.x_position,cliMessage.request.y_position,cliMessage.request.width,cliMessage.request.height);
+                    ServerMessage servResposne(cliMessage.request.numRectangles);
+
+                    std::vector<std::string> frameInfo = prepareRect(cliMessage.request.rectangleRequests,cliMessage.request.numRectangles);
                     // Make a caching mechanism to store the already asked 
-                    FrameBufferUpdate response(1);
-                    response.responseRect = queriedRect;
+                    FrameBufferUpdate response(cliMessage.request.numRectangles);
+
+                    for (int i =0;i<servResposne.buffUpdate.numRectangles;i++){
+                        strcpy(servResposne.buffUpdate.rectangleResponse[i].information,frameInfo.at(i).c_str());
+                    }
                     // send the responseRect
+                    sendcount = send(connectedSock,&response,sizeof(response),0);
+
                 }
             }
         }
@@ -119,7 +123,7 @@ int Server::handshake(int connectedSock){
 
     int sendcount = 0;
     while(sendcount<=0){
-        sendcount = send(connectedSock,(void *)&initMessage,sizeof(initMessage));
+        sendcount = send(connectedSock,(void *)&initMessage,sizeof(initMessage),0);
     }
 
     serverJob frameJob = std::bind(&Server::frameSending,this,connectedSock);

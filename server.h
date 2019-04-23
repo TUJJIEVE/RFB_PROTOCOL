@@ -37,7 +37,7 @@ class Server{
 
 
     private:
-        void prepareRect(Rectangle &);
+        std::vector<std::string>  prepareRect(Rectangle *,int);
         ServerInit prepareInit(int);
         void listenConnections();
         Cache frameCaches;
