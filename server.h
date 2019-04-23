@@ -18,6 +18,7 @@
 #include <vector>
 #include "threadpool.h"
 #include "messages.h"
+#include "frameBuffer.h"
 #include "cache.h"
 using namespace std;
 
@@ -46,10 +47,12 @@ class Server{
         queue<int> freeSockets;
         int firstClient;
         ThreadPool tPool;
+        char *buff ="/dev/fb0";
+        FrameBuffer frameBuffer;
         bool isMutliMode;
         sockaddr_in serverAddr;
         int serverListenSock;
         int totalSockets;
         bool isOver = false;
-        // 
+        
 };

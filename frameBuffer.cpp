@@ -1,7 +1,7 @@
 #include "frameBuffer.h"
 
 
-FrameBuffer::FrameBuffer(char * fbDevice){
+void FrameBuffer::setBuffer(char * fbDevice){
     fbd = open(fbDevice,O_RDWR);
     if (fbd == -1){
         printf("Error: Cannot open the frame buffer object");

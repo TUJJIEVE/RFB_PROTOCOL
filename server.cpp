@@ -3,12 +3,12 @@
 
 
 Server::Server(int freeSocks){
-
+    frameBuffer.setBuffer("/dev/fb0");
     serverListenSock = socket(AF_INET,SOCK_STREAM,0);
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = INADDR_ANY;
     serverAddr.sin_port = htons(SERVER_PORT);
-
+    
     totalSockets = freeSocks;
 
     if (bind (serverListenSock,(const sockaddr*)&serverAddr, sizeof(serverAddr)) < 0){
@@ -47,15 +47,19 @@ ServerInit Server::prepareInit(int sock){
 
 std::vector<std::string> Server::prepareRect(Rectangle *rect,int numRectangles){
     // read frame buffer and then fill the info into the rectangle object
-    std::vector<std::string> resposne;
+    std::vector<std::string> response;
     for (int i=0;i<numRectangles;i++){
         // if possible implement caching mechanism
-
         // now prepare the rectangles and fill the into the resonse array        
+        int size = rect[i].width * rect[i].height * frameBuffer.vinfo.bits_per_pixel/8;
+        char buff[size];
+        frameBuffer.queryBuffer(buff,rect[i]);
+        std::string temp = buff;
+
 
     }
 
-    return 
+    return response;
 }
 
 int Server::frameSending(int connectedSock){
@@ -91,16 +95,17 @@ int Server::frameSending(int connectedSock){
                 else{
                     // send the complete info 
                     //Rectangle queriedRect(cliMessage.request.x_position,cliMessage.request.y_position,cliMessage.request.width,cliMessage.request.height);
-                    ServerMessage servResposne(cliMessage.request.numRectangles);
+                    ServerMessage servResponse(cliMessage.request.numRectangles);
 
                     std::vector<std::string> frameInfo = prepareRect(cliMessage.request.rectangleRequests,cliMessage.request.numRectangles);
                     // Make a caching mechanism to store the already asked 
                     FrameBufferUpdate response(cliMessage.request.numRectangles);
 
-                    for (int i =0;i<servResposne.buffUpdate.numRectangles;i++){
-                        strcpy(servResposne.buffUpdate.rectangleResponse[i].information,frameInfo.at(i).c_str());
+                    for (int i =0;i<servResponse.buffUpdate.numRectangles;i++){
+                        //servResponse.buffUpdate.rectangleResponse[i].information = (char *) malloc(frameInfo.at(i).size());
+                        strcpy(servResponse.buffUpdate.rectangleResponse[i].information,frameInfo.at(i).c_str());
                     }
-                    // send the responseRect
+                    // send the responseRect use while loop to ensure complete sending of packets
                     sendcount = send(connectedSock,&response,sizeof(response),0);
 
                 }

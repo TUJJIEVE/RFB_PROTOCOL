@@ -1,5 +1,7 @@
 /* Message structures will be defined */
 
+
+
 struct clientInit{
     bool sharedFlag;
 };
@@ -32,7 +34,7 @@ struct ServerInit{
 };
 
 struct SetPixelFormat{
-    char messageType = '0';
+    //char messageType = '0';
     bool toSet;
     struct PixelFormat pf;
 };
@@ -42,7 +44,7 @@ struct Encodings{
 };
 
 struct SetEncodings{
-    char messageType = '2';
+    //char messageType = '2';
     bool toSet;
     struct Encodings encoding ;
 };
@@ -68,7 +70,7 @@ struct Rectangle{
 };
 
 struct FrameBufferUpdateRequest{
-    char messageType = '3';
+    //char messageType = '3';
     bool incremental;
     int numRectangles;
     Rectangle rectangleRequests[50];
@@ -83,7 +85,7 @@ struct KeyEvent{
 
 
 struct PointerEvent{
-    char messageType  = '5';
+    //char messageType  = '5';
     char buttonMask[8];
     int x_position;
     int y_position;
@@ -92,18 +94,18 @@ struct PointerEvent{
 };
 
 struct ClientCutText{
-    char messageType = '6';
+    //char messageType = '6';
     int length;
-    char text[200];
+    //char text[200];
 };
-
+// What size to keep there could be error while sendig if pointer is used
 struct RectangleInfo{
-    char information[200];
+    char information[400];
 };
 
 
 struct FrameBufferUpdate{
-    char messageType = '0';
+    //char messageType = '0';
     int numRectangles;
     RectangleInfo rectangleResponse[50];
     FrameBufferUpdate(int num){
@@ -112,7 +114,7 @@ struct FrameBufferUpdate{
 };
 
 struct SetColorMapEntries{
-    char messageType = '1';
+    //char messageType = '1';
     int firstColor;
     int numberOfColors;
     int red;
@@ -121,23 +123,23 @@ struct SetColorMapEntries{
 };
 
 struct Bell{
-    char messageType = '2';
+    //char messageType = '2';
 
 };
 
 struct ServerCutText{
-    char messageType = '3';
+    //char messageType = '3';
     int lenght;
-    char text[200];
+    //char text[200];
 };
 
 
 
 struct ServerMessage{
     FrameBufferUpdate buffUpdate;
-    SetColorMapEntries colorMap;
+    //SetColorMapEntries colorMap;
     Bell   bell;
-    ServerCutText cutText;
+    //ServerCutText cutText;
     ServerMessage(int num):buffUpdate(num){}
 };
 
