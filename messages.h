@@ -54,7 +54,6 @@ struct Rectangle{
     int width;
     int height;
     int encodingType;
-    char info[200];
     Rectangle();
     Rectangle(int x_pos,int y_pos,int w,int h){
         x_position = x_pos;
@@ -71,10 +70,8 @@ struct Rectangle{
 struct FrameBufferUpdateRequest{
     char messageType = '3';
     bool incremental;
-    int x_position;
-    int y_position;
-    int width;
-    int height;
+    int numRectangles;
+    Rectangle rectangleRequests[50];
 };
 
 struct KeyEvent{
@@ -100,13 +97,15 @@ struct ClientCutText{
     char text[200];
 };
 
-
+struct RectangleInfo{
+    char information[200];
+};
 
 
 struct FrameBufferUpdate{
     char messageType = '0';
     int numRectangles;
-    Rectangle responseRect;
+    RectangleInfo rectangleResponse[50];
     FrameBufferUpdate(int num){
         numRectangles = num;
     }    
@@ -139,6 +138,7 @@ struct ServerMessage{
     SetColorMapEntries colorMap;
     Bell   bell;
     ServerCutText cutText;
+    ServerMessage(int num):buffUpdate(num){}
 };
 
 
