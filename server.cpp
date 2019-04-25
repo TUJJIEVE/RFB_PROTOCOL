@@ -14,6 +14,7 @@ Server::Server(int freeSocks){
     if (bind (serverListenSock,(const sockaddr*)&serverAddr, sizeof(serverAddr)) < 0){
         printf("Binding Failed");
         exit(EXIT_FAILURE);
+
     }
     
     listen(serverListenSock,200);
@@ -55,16 +56,19 @@ std::vector<std::string> Server::prepareRect(Rectangle *rect,int numRectangles){
         char buff[size];
         frameBuffer.queryBuffer(buff,rect[i]);
         std::string temp = buff;
-
+        response.push_back(temp);
 
     }
 
     return response;
 }
 
+
+
 int Server::frameSending(int connectedSock){
     int recvCount = 0;
-    int sendcount = 0 , recvcount = 0;
+    int sendcount = 0;
+    int recvcount = 0;
     ClientMessage cliMessage;
     fcntl(connectedSock,F_SETFL,O_NONBLOCK);
     while (true){
@@ -80,12 +84,17 @@ int Server::frameSending(int connectedSock){
 
             if (cliMessage.key.downFlag){
                 // key event happened
-
+                ioDevice.keyPress_release(cliMessage.key.key);
             }
             else if (cliMessage.pointer.isMoved || cliMessage.pointer.isPressed){
                 // Mouse poiner event happened
-
-            }
+                if (cliMessage.pointer.isMoved){
+                    ioDevice.moveMouse(cliMessage.pointer.x_position,cliMessage.pointer.y_position);
+                }
+                if (cliMessage.pointer.isPressed){
+                    ioDevice.mouseClick(cliMessage.pointer.buttonMask);
+                }
+            }   
 
             else{
                 if (cliMessage.request.incremental){

@@ -20,6 +20,8 @@
 #include "messages.h"
 #include "frameBuffer.h"
 #include "cache.h"
+#include "io.h"
+
 using namespace std;
 
 #define NUM_THREADS 10
@@ -41,6 +43,7 @@ class Server{
         std::vector<std::string>  prepareRect(Rectangle *,int);
         ServerInit prepareInit(int);
         void listenConnections();
+        IO ioDevice;
         Cache frameCaches;
         int numConnected;
         vector<int> activeSockets;
