@@ -32,18 +32,15 @@ Server::Server(int freeSocks){
 
 ServerInit Server::prepareInit(int sock){
     ServerInit initMessage;
-    if (sock == firstClient){
-        // give him the control rights
-        
-        initMessage.isControl = true;
-        // set parameters for the message
+    if (sock == firstClient) initMessage.isControl = true;
+    else initMessage.isControl = false;
+    
+    initMessage.pf.bitsPerPix = frameBuffer.vinfo.bits_per_pixel;
+    initMessage.bufferHeight = frameBuffer.vinfo.yres;
+    initMessage.bufferWidth = frameBuffer.vinfo.xres;
+    initMessage.maxReqSize = MAX_REQSIZE;
+    return initMessage;
 
-    }
-    else{
-        // give the client only screen sharing rights
-        initMessage.isControl = false;
-        // set the parameters of the message
-    }
 }
 
 std::vector<std::string> Server::prepareRect(Rectangle *rect,int numRectangles){
@@ -62,14 +59,57 @@ std::vector<std::string> Server::prepareRect(Rectangle *rect,int numRectangles){
 
     return response;
 }
+// Opens another connection just for listening to frame buffer update requests
+int Server::bufferReceiving(int frameSocket){
+    int recvCount = 0;
+    int sendCount = 0;
+    FrameBufferUpdateRequest cliMessage;
+    
+    fcntl(frameSocket,F_SETFL,O_NONBLOCK);
+    while (true){
+        recvCount = recv(frameSocket,&cliMessage,sizeof(cliMessage),0);
+        
+        if (recvCount>0){
+            
+            if (cliMessage.isShuttingDown){
+                // start shutting sequence.
+            
+                break;
+            }
 
+            else{
+                if (cliMessage.incremental){
+                    /// send on lt if it's changed
+                
+                }
+                else{
+                    // send the complete info 
+                    //Rectangle queriedRect(cliMessage.request.x_position,cliMessage.request.y_position,cliMessage.request.width,cliMessage.request.height);
+                    ServerMessage servResponse(cliMessage.numRectangles);
 
+                    std::vector<std::string> frameInfo = prepareRect(cliMessage.rectangleRequests,cliMessage.numRectangles);
+                    // Make a caching mechanism to store the already asked 
+                    FrameBufferUpdate response(cliMessage.numRectangles);
+
+                    for (int i =0;i<servResponse.buffUpdate.numRectangles;i++){
+                        //servResponse.buffUpdate.rectangleResponse[i].information = (char *) malloc(frameInfo.at(i).size());
+                        strcpy(servResponse.buffUpdate.rectangleResponse[i].information,frameInfo.at(i).c_str());
+                    }
+                    // send the responseRect use while loop to ensure complete sending of packets
+                    sendCount = send(frameSocket,&response,sizeof(response),0);
+
+                }
+            }
+        }
+
+    }  
+}
 
 int Server::frameSending(int connectedSock){
     int recvCount = 0;
     int sendcount = 0;
-    int recvcount = 0;
-    ClientMessage cliMessage;
+    ClientMessage cliMessage;  
+  
     fcntl(connectedSock,F_SETFL,O_NONBLOCK);
     while (true){
         recvCount = recv(connectedSock,&cliMessage,sizeof(cliMessage),0);
@@ -96,53 +136,31 @@ int Server::frameSending(int connectedSock){
                 }
             }   
 
-            else{
-                if (cliMessage.request.incremental){
-                    /// send on lt if it's changed
-                
-                }
-                else{
-                    // send the complete info 
-                    //Rectangle queriedRect(cliMessage.request.x_position,cliMessage.request.y_position,cliMessage.request.width,cliMessage.request.height);
-                    ServerMessage servResponse(cliMessage.request.numRectangles);
-
-                    std::vector<std::string> frameInfo = prepareRect(cliMessage.request.rectangleRequests,cliMessage.request.numRectangles);
-                    // Make a caching mechanism to store the already asked 
-                    FrameBufferUpdate response(cliMessage.request.numRectangles);
-
-                    for (int i =0;i<servResponse.buffUpdate.numRectangles;i++){
-                        //servResponse.buffUpdate.rectangleResponse[i].information = (char *) malloc(frameInfo.at(i).size());
-                        strcpy(servResponse.buffUpdate.rectangleResponse[i].information,frameInfo.at(i).c_str());
-                    }
-                    // send the responseRect use while loop to ensure complete sending of packets
-                    sendcount = send(connectedSock,&response,sizeof(response),0);
-
-                }
-            }
         }
 
     }
 
-
-
-
-
 }
 
-int Server::handshake(int connectedSock){
+int Server::handshake(int connectedSock,sockaddr_in clientAddr){
     // Initial handshake messages to take place here
     // If it's not the first client then tell the client you are only screen sharing
-    
+    int frameSocket = socket(AF_INET,SOCK_STREAM,0);
+    if (connect(frameSocket,(sockaddr*)&clientAddr,sizeof(clientAddr)) <0) {
+        printf("second connection not able to open\n");
+    }
+
+
     ServerInit initMessage = prepareInit(connectedSock);
 
     int sendcount = 0;
     while(sendcount<=0){
         sendcount = send(connectedSock,(void *)&initMessage,sizeof(initMessage),0);
     }
-
+    serverJob bufferReqJob = std::bind(&Server::bufferReceiving,this,frameSocket);
     serverJob frameJob = std::bind(&Server::frameSending,this,connectedSock);
     pair<serverJob,int> job = make_pair(frameJob,connectedSock);
-    tPool.addJobs(1,job);
+    tPool.addJobs(2,job,bufferReqJob);
 
     return 0;
 
@@ -159,7 +177,7 @@ void Server::listenConnections(){
         int clientSock = accept(serverListenSock,(sockaddr*) &clientAddr,(socklen_t*)&len);
 
         if (clientSock !=-1){
-                serverJob handshakeJob = std::bind(&Server::handshake,this,clientSock);
+                serverJob handshakeJob = std::bind(&Server::handshake,this,clientSock,clientAddr);
                 tPool.addJobs(1,make_pair(handshakeJob,clientSock));                  
                 firstClient = clientSock;
                 numConnected += 1;

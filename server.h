@@ -23,7 +23,7 @@
 #include "io.h"
 
 using namespace std;
-
+#define MAX_REQSIZE 400
 #define NUM_THREADS 10
 #define SERVER_PORT 5093
 
@@ -35,14 +35,14 @@ class Server{
         void shutdown();
         Server(int numFreeSocks);
         void initiate();
-        int handshake(int);
+        int handshake(int,sockaddr_in);
         int frameSending(int); 
-
-
+        int bufferReceiving(int);
+        void listenConnections();
     private:
         std::vector<std::string>  prepareRect(Rectangle *,int);
         ServerInit prepareInit(int);
-        void listenConnections();
+        
         IO ioDevice;
         Cache frameCaches;
         int numConnected;

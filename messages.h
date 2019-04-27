@@ -28,7 +28,10 @@ struct ServerInit{
     bool isControl;
     int bufferWidth;
     int bufferHeight;
+    //int bitsPerPixel;
+    int maxReqSize;
     struct PixelFormat pf;
+    
     char name[200];
 
 };
@@ -74,6 +77,8 @@ struct FrameBufferUpdateRequest{
     bool incremental;
     int numRectangles;
     Rectangle rectangleRequests[50];
+    bool isShuttingDown; 
+
 };
 
 struct KeyEvent{
@@ -110,7 +115,8 @@ struct FrameBufferUpdate{
     RectangleInfo rectangleResponse[50];
     FrameBufferUpdate(int num){
         numRectangles = num;
-    }    
+    }
+       
 };
 
 struct SetColorMapEntries{
@@ -146,11 +152,11 @@ struct ServerMessage{
 
 struct ClientMessage{
     SetPixelFormat pixelFromat;
-    SetEncodings encodings;
-    FrameBufferUpdateRequest request;
+    //SetEncodings encodings;
+    //FrameBufferUpdateRequest request;
     KeyEvent key;
     PointerEvent pointer;
-    ClientCutText cutText;
+    //ClientCutText cutText;
     bool isShuttingDown = false;
 };
 
