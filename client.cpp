@@ -6,12 +6,13 @@
 Client::Client(GUI * gui){
     guiWindow = gui;
     clientSocket = socket(AF_INET,SOCK_STREAM,0);
+    frameSocket = socket(AF_INET,SOCK_STREAM,0);
     if (clientSocket == -1) printf("Not able to create socket\n");
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = 8093;
+    serverAddr.sin_port = 5093;
     serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     clientAddr.sin_family = AF_INET;
-    clientAddr.sin_port = 8094;
+    clientAddr.sin_port = CLIENT_PORT;
     clientAddr.sin_addr.s_addr  = htonl(INADDR_ANY);
 
     if (bind(frameSocket,(sockaddr*)&clientAddr,sizeof(clientAddr)) <0){
@@ -23,7 +24,7 @@ Client::Client(GUI * gui){
 
 void Client::sendMessage(){
     // Look for mouse and key events ans send these to server
-    
+
 }
 
 

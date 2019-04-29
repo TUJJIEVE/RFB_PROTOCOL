@@ -1,6 +1,7 @@
 /* Message structures will be defined */
 
-
+#ifndef MESSAGES_H
+#define MESSAGES_H
 
 struct clientInit{
     bool sharedFlag;
@@ -59,13 +60,6 @@ struct Rectangle{
     int width;
     int height;
     int encodingType;
-    Rectangle();
-    Rectangle(int x_pos,int y_pos,int w,int h){
-        x_position = x_pos;
-        y_position = y_pos;
-        width = w;
-        height = h;
-    }
     bool operator==(const Rectangle&rhs){
         return (this->x_position == rhs.x_position && this->y_position == rhs.y_position
                 && this->height == rhs.height && this->width == rhs.width);
@@ -113,9 +107,6 @@ struct FrameBufferUpdate{
     //char messageType = '0';
     int numRectangles;
     RectangleInfo rectangleResponse[50];
-    FrameBufferUpdate(int num){
-        numRectangles = num;
-    }
        
 };
 
@@ -146,11 +137,10 @@ struct ServerMessage{
     //SetColorMapEntries colorMap;
     Bell   bell;
     //ServerCutText cutText;
-    ServerMessage(int num):buffUpdate(num){}
 };
 
 
-struct ClientMessage{
+struct CliMessage{
     SetPixelFormat pixelFromat;
     //SetEncodings encodings;
     //FrameBufferUpdateRequest request;
@@ -160,6 +150,4 @@ struct ClientMessage{
     bool isShuttingDown = false;
 };
 
-struct Encodings{
-
-};
+#endif

@@ -5,7 +5,13 @@
 #include <linux/fb.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+
+
+#ifndef FRAMEBUFFER_H
+#define FRAMEBUFFER_H
+
 #include "messages.h"
+
 #include <string.h>
 #include <string>
 class FrameBuffer{
@@ -31,3 +37,5 @@ class FrameBuffer{
         
 
 };
+
+#endif

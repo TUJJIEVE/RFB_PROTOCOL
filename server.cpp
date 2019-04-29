@@ -85,12 +85,12 @@ int Server::bufferReceiving(int frameSocket){
                 else{
                     // send the complete info 
                     //Rectangle queriedRect(cliMessage.request.x_position,cliMessage.request.y_position,cliMessage.request.width,cliMessage.request.height);
-                    ServerMessage servResponse(cliMessage.numRectangles);
-
+                    ServerMessage servResponse;//(cliMessage.numRectangles);
+                    servResponse.buffUpdate.numRectangles = cliMessage.numRectangles;
                     std::vector<std::string> frameInfo = prepareRect(cliMessage.rectangleRequests,cliMessage.numRectangles);
                     // Make a caching mechanism to store the already asked 
-                    FrameBufferUpdate response(cliMessage.numRectangles);
-
+                    FrameBufferUpdate response;//(cliMessage.numRectangles);
+                    response.numRectangles = cliMessage.numRectangles;
                     for (int i =0;i<servResponse.buffUpdate.numRectangles;i++){
                         //servResponse.buffUpdate.rectangleResponse[i].information = (char *) malloc(frameInfo.at(i).size());
                         strcpy(servResponse.buffUpdate.rectangleResponse[i].information,frameInfo.at(i).c_str());
@@ -108,7 +108,7 @@ int Server::bufferReceiving(int frameSocket){
 int Server::frameSending(int connectedSock){
     int recvCount = 0;
     int sendcount = 0;
-    ClientMessage cliMessage;  
+    CliMessage cliMessage;  
   
     fcntl(connectedSock,F_SETFL,O_NONBLOCK);
     while (true){
@@ -159,8 +159,7 @@ int Server::handshake(int connectedSock,sockaddr_in clientAddr){
     }
     serverJob bufferReqJob = std::bind(&Server::bufferReceiving,this,frameSocket);
     serverJob frameJob = std::bind(&Server::frameSending,this,connectedSock);
-    pair<serverJob,int> job = make_pair(frameJob,connectedSock);
-    tPool.addJobs(2,job,bufferReqJob);
+    tPool.addJobs(2,frameJob,bufferReqJob);
 
     return 0;
 
@@ -178,7 +177,7 @@ void Server::listenConnections(){
 
         if (clientSock !=-1){
                 serverJob handshakeJob = std::bind(&Server::handshake,this,clientSock,clientAddr);
-                tPool.addJobs(1,make_pair(handshakeJob,clientSock));                  
+                tPool.addJobs(1,handshakeJob);                  
                 firstClient = clientSock;
                 numConnected += 1;
                 if (numConnected >1){
@@ -207,7 +206,7 @@ void Server::shutdown(){
     for (int i=0;i<activeSockets.size();i++){
         close(activeSockets.at(i));
     }
-    while (!freeSockets.empty){
+    while (!freeSockets.empty()){
         int soc = freeSockets.front();
         close(soc);
         freeSockets.pop();

@@ -19,6 +19,8 @@
 #include "messages.h"
 #include "gui.h"
 
+#define CLIENT_PORT 5094
+
 class Client{
 
     public:

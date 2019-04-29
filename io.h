@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/keysym.h>
+
+#pragma once
+
 class IO{
     private:
         Display * dpy;
@@ -11,6 +14,8 @@ class IO{
         Window root_window;
         int display_height;
         int display_width;
+        Window def_root_window;
+        XKeyEvent createKeyEvent(Display*,Window&,Window&,bool,int,int);
     public:
         IO();
         void mouseClick(char *);

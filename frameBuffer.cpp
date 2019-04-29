@@ -1,5 +1,8 @@
 #include "frameBuffer.h"
 
+FrameBuffer::FrameBuffer(){
+    
+}
 
 void FrameBuffer::setBuffer(char * fbDevice){
     fbd = open(fbDevice,O_RDWR);

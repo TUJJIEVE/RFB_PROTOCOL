@@ -16,7 +16,7 @@ void ThreadPool::start(int numt){
 
 }
 
-void ThreadPool::addJobs(int count, std::pair<std::function<int(int)>,int> job,...){
+void ThreadPool::addJobs(int count, std::function<int(int)> job,...){
     va_list jobs;
     va_start(jobs,job);
     {
@@ -28,7 +28,7 @@ void ThreadPool::addJobs(int count, std::pair<std::function<int(int)>,int> job,.
     for (int i=1;i<count;i++){
         {
             std::unique_lock<std::mutex> l(jobMutex);
-            jobQ.push(va_arg(jobs,std::pair<std::function<int(int)>,int> ));
+            jobQ.push(va_arg(jobs, std::function <int(int) > ));
             cond.notify_all();
         }
     }
@@ -37,7 +37,7 @@ void ThreadPool::addJobs(int count, std::pair<std::function<int(int)>,int> job,.
 }
 
 void ThreadPool::waitingRoom(){
-    std::pair<std::function<int(int)>,int> job;
+    std::function<int(int)> job;
 
     while(true){
 
@@ -51,8 +51,7 @@ void ThreadPool::waitingRoom(){
             jobQ.pop();
         }
 
-        int socket = job.second;
-        (job.first)(socket);
+        job(1);
         
     }
 }

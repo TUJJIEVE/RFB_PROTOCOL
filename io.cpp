@@ -9,6 +9,7 @@ IO::IO(){
     }
     screen = XDefaultScreen(dpy);
     root_window = XRootWindow(dpy,screen);
+    def_root_window = XDefaultRootWindow(dpy);
     display_height = DisplayHeight(dpy,screen);
     display_width = DisplayWidth(dpy,screen);
 
@@ -43,7 +44,7 @@ void IO::moveMouse(int x,int y){
     XFlush(dpy);
 }
 
-XKeyEvent createKeyEvent(Display *display, Window &win,
+XKeyEvent IO::createKeyEvent(Display *display, Window &win,
                            Window &winRoot, bool press,
                            int keycode, int modifiers)
 {
@@ -74,10 +75,10 @@ void IO::keyPress_release(int key){
    int revert;
    XGetInputFocus(dpy, &winFocus, &revert);
 
-   XKeyEvent event = createKeyEvent(dpy, winFocus, root_window, true, key, 0);
+   XKeyEvent event = createKeyEvent(dpy, winFocus, def_root_window, true, key, 0);
    XSendEvent(event.display, event.window, True, KeyPressMask, (XEvent *)&event);
 
-   event = createKeyEvent(dpy, winFocus, root_window, false, key, 0);
+   event = createKeyEvent(dpy, winFocus, def_root_window, false, key, 0);
    XSendEvent(event.display, event.window, True, KeyPressMask, (XEvent *)&event);
 }
 

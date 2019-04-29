@@ -16,8 +16,12 @@
 #include <thread>
 #include <fstream>
 #include <vector>
+
+#ifndef SERVER_H
+#define SERVER_H
+
 #include "threadpool.h"
-#include "messages.h"
+//#include "messages.h"
 #include "frameBuffer.h"
 #include "cache.h"
 #include "io.h"
@@ -59,3 +63,6 @@ class Server{
         bool isOver = false;
         
 };
+
+
+#endif
