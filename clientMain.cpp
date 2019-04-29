@@ -23,7 +23,7 @@ void timer(int x);
 void keyboard(unsigned char c , int x , int y);
 void mouse(int button , int state , int x , int y);
 int handler(int argc, char** argv);
-
+void processSpecialKeys(int key, int x, int y);
 
 Client C(nullptr);
 
@@ -72,11 +72,20 @@ void timer(int x){
     glutTimerFunc(5000,timer,0); // recusive call to update
 }
 void keyboard(unsigned char c , int x , int y){
+	int shift_ctrl_alt = glutGetModifiers();
+ 
+    if(shift_ctrl_alt == GLUT_ACTIVE_SHIFT) std::cout << "active : shift" << std::endl;
+    else if(shift_ctrl_alt == GLUT_ACTIVE_CTRL) std::cout << "active : ctrl" << std::endl;
+    else if(shift_ctrl_alt == GLUT_ACTIVE_ALT)std::cout << "active : alt" << std::endl;
+    else if(shift_ctrl_alt == GLUT_ACTIVE_CTRL  | GLUT_ACTIVE_SHIFT) std::cout << "active : ctrl,shift" << std::endl;
+    else if(shift_ctrl_alt == GLUT_ACTIVE_ALT | GLUT_ACTIVE_SHIFT)std::cout << "active : alt,shift" << std::endl;
+    else if(shift_ctrl_alt == GLUT_ACTIVE_CTRL | GLUT_ACTIVE_ALT) std::cout << "active : ctrl,alt" << std::endl;
+    else if(shift_ctrl_alt == GLUT_ACTIVE_ALT | GLUT_ACTIVE_SHIFT | GLUT_ACTIVE_CTRL)std::cout << "active : alt,shift,ctrl" << std::endl;
+    
     std::cout << "Keyboard Input :: " + std::to_string(int(c)) << std::endl;
     //--------------------
 
-    // c.handleKeyBoard(int(c));
-
+  
     //-------------------
    
 } 
@@ -85,7 +94,20 @@ void mouse(int button , int state , int x , int y){
     std::cout << "Mouse Coordinates :: "+std::to_string(x)+","+std::to_string(y) <<std::endl;    
 }
 
+void processSpecialKeys(int key, int x, int y) {
 
+	switch(key) {
+		case GLUT_KEY_F1 :
+            std::cout << "Keyboard Input :: f1" << std::endl;
+            break;
+		case GLUT_KEY_F2 :
+            std::cout << "Keyboard Input :: f2" << std::endl;
+            break;
+		case GLUT_KEY_F3 :
+            std::cout << "Keyboard Input :: f3" << std::endl;
+            break;
+	}
+}
 
 int handler(int argc, char** argv)
 {
@@ -98,6 +120,7 @@ int handler(int argc, char** argv)
 
     glutDisplayFunc(render);
     glutKeyboardFunc(keyboard);
+    glutSpecialFunc(processSpecialKeys);
     glutMouseFunc(mouse);
     glutTimerFunc(0,timer,0);
    
