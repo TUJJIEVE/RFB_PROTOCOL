@@ -13,7 +13,7 @@ struct voidPointers
 {
     int nPtrs = 0 ;
     void * ptrs[MAX_PTRS_IN_VOIDPOINTERS];
-};
+};.
 
 
 void destroy(GtkWidget *widget,gpointer   data );
@@ -103,11 +103,27 @@ void on_btn_connect_clicked(GtkWidget *widget,gpointer   data){
     printf("user clicked button\nipaddr : %s\npasswd : %s\n",ipp.ip,ipp.pwd);
     // gtk_entry_set_text( (GtkEntry *)ipAddr,"");
     // gtk_entry_set_text( (GtkEntry *)password,"");
+    bool isPasswordCorrect = false ;
 
     
     if(strcmp((const char *)ipp.ip,"127.0.0.1") == 1){
-        // gtk_text_buffer_set_text((GtkTextBuffer * )ipAddrMsg,"are you kidding me",18);
+        printf("used same ip address \n");
     }
+
+
+    // isPasswordCorrect = checkPassword and assign bool
+
+
+    if(isPasswordCorrect){
+        gtk.window.destroy() ;
+        //-----------------------
+        //run function which should run after password is correct
+
+        //------------------------
+    }else{
+        printf("incorrect password\n");
+    }
+    
 
 
 }
