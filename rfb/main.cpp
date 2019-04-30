@@ -1,6 +1,7 @@
 #include "client.h"
 #include <GL/glew.h> 
 #include <GL/glut.h>
+#include <GL/freeglut.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <iostream>
@@ -48,19 +49,6 @@ int main(int argc, char** argv){
     handler(argc , argv) ; 
     return 0;
 }
-// void copyPixels(unsigned char * dest , unsigned char * src , int x , int y , int w , int h , int W . int H){
-//     int ii;
-//     for(int j = 0 ; j < h ; j++){
-//         ii = ((y+j)*W+x)*3;
-//         for(int i = 0 ; i < w ; i++){
-//             src[ii] = dest[(j*w+i)*3 + 0];
-//             src[ii+1] = dest[(j*w+i)*3 + 1];
-//             src[ii + 2] = dest[(j*w+i)*3 + 2];
-//             ii+=3;
-//         }
-
-//     }
-// }
 
 void drawPixels(unsigned char * data , int x , int y , int w , int h){
     glBegin (GL_POINTS);
@@ -68,62 +56,34 @@ void drawPixels(unsigned char * data , int x , int y , int w , int h){
             for (int xx = 0; xx < w; xx++) {
                 glColor3f((float)(data[(yy*w+xx)*3+0]) / 255,(float)(data[(yy*w+xx)*3+1]) / 255,(float)(data[(yy*w+xx)*3+2]) / 255);
                 glVertex2i( xx + x , yy + y );
-                // printf("ploting points\n");
+
             }
         }
     glEnd ();
-    printf("terminated drawPixels\n");
+
+
 }
 
 
 void render(){
-    printf("rendering\n");
     
     while (!C.frameQs.empty()){
-    FrameBufferUpdate F;
-    int size = -1;
-    {
-        std::unique_lock<std::mutex> l(C.m);
-        F = C.frameQs.front();
-        size = C.frameQs.size();
-        C.frameQs.pop();
-    }
-    if (size>0){
-            //glClear(GL_COLOR_BUFFER_BIT);
-    
-    //unsigned char aa[786*1366*3];
-    //screen.getPixels(aa,0,0,1366,786);
+        FrameBufferUpdate F;
+        int size = -1;
+            F = C.frameQs.front();
+            size = C.frameQs.size();
+            C.frameQs.pop();
+        
+        if (size>0 && F.rectangleResponse[0].information[0]!='\0'){
 
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-    gluOrtho2D( 0.0, 1366.0, 768.0,0.0 );
-    //unsigned char bb[100*100*3];
-    // copyPixels()
-    // memcpy(bb,aa,100*100*3);
-    // int ii = 0;
-    // for(int j = 0 ; j < 100 ; j++){
-    //     for(int i = 0 ; i < 100 ; i++){
+            glMatrixMode( GL_PROJECTION );
+            glLoadIdentity();
+            gluOrtho2D( 0.0, 1366.0, 768.0,0.0 );
+            
+            drawPixels(F.rectangleResponse[0].information,F.rectangleResponse[0].x,F.rectangleResponse[0].y,100,100);
 
-    //         bb[(j*100+i)*3 + 0] = aa[(j*1366+i)*3 + 0];
-    //          bb[(j*100+i)*3 + 1] = aa[(j*1366+i)*3 + 1];
-    //           bb[(j*100+i)*3 + 2] = aa[(j*1366+i)*3 + 2];
-    //     }
-    // }
-    printf("all values are set\n");
-    
-    drawPixels(F.rectangleResponse[0].information,F.rectangleResponse[0].x,F.rectangleResponse[0].y,100,100);
-    // int y = 0 , x = 0 , h = 786 , w = 1366 ;
-    //   glBegin (GL_POINTS);
-    //     for (int yy = 0; yy < h; y++) {
-    //         for (int xx = 0; xx < w; x++) {
-    //             glColor3f((float)(aa[(yy*w+xx)*3+0]) / 255,(float)(aa[(yy*w+xx)*3+1]) / 255,(float)(aa[(yy*w+xx)*3+2]) / 255);
-    //             glVertex2i( xx + x , yy + y );
-    //         }
-    //     }
-    // glEnd ();
-    std::cout << "completed rendering" << std::endl;
-    glutSwapBuffers();
-    }
+            glutSwapBuffers();
+        }
     }    
 }
 
@@ -138,24 +98,29 @@ void timer(int x){
     glutTimerFunc(500,timer,0); // recusive call to update
 }
 void keyboard(unsigned char c , int x , int y){
-    int shift_ctrl_alt = glutGetModifiers();
- 
-    if(shift_ctrl_alt == GLUT_ACTIVE_SHIFT) std::cout << "active : shift" << std::endl;
-    else if(shift_ctrl_alt == GLUT_ACTIVE_CTRL) std::cout << "active : ctrl" << std::endl;
-    else if(shift_ctrl_alt == GLUT_ACTIVE_ALT)std::cout << "active : alt" << std::endl;
-    else if(shift_ctrl_alt == GLUT_ACTIVE_CTRL  | GLUT_ACTIVE_SHIFT) std::cout << "active : ctrl,shift" << std::endl;
-    else if(shift_ctrl_alt == GLUT_ACTIVE_ALT | GLUT_ACTIVE_SHIFT)std::cout << "active : alt,shift" << std::endl;
-    else if(shift_ctrl_alt == GLUT_ACTIVE_CTRL | GLUT_ACTIVE_ALT) std::cout << "active : ctrl,alt" << std::endl;
-    else if(shift_ctrl_alt == GLUT_ACTIVE_ALT | GLUT_ACTIVE_SHIFT | GLUT_ACTIVE_CTRL)std::cout << "active : alt,shift,ctrl" << std::endl;
+
+    KeyEvent key_pressed;
+    
+    key_pressed.key = c;
+    key_pressed.downFlag = true;
+    PointerEvent p;p.isMoved = false;p.isPressed = false;
+    C.sendMessage(key_pressed,p);
     
     std::cout << "Keyboard Input :: " + std::to_string(int(c)) << std::endl;
-    //--------------------
 
   
     //-------------------
    
 } 
 void mouse(int button , int state , int x , int y){
+    PointerEvent pointer;
+    pointer.isMoved = true;
+    pointer.isPressed = true;
+    pointer.x_position = x;
+    pointer.y_position = y;
+    KeyEvent k;k.downFlag = false;
+    pointer.button = button;
+    C.sendMessage(k,pointer);
     std::cout << "Mouse Input :: " + std::to_string(int(button)) << std::endl;
     std::cout << "Mouse Coordinates :: "+std::to_string(x)+","+std::to_string(y) <<std::endl;    
 }
@@ -165,6 +130,8 @@ void processSpecialKeys(int key, int x, int y) {
     switch(key) {
         case GLUT_KEY_F1 :
             std::cout << "Keyboard Input :: f1" << std::endl;
+            C.shutitDown();
+            glutLeaveMainLoop();
             break;
         case GLUT_KEY_F2 :
             std::cout << "Keyboard Input :: f2" << std::endl;
@@ -191,7 +158,7 @@ int handler(int argc, char** argv)
     glutTimerFunc(0,timer,0);
    
 
-    printf("starting main loop now\n");
+    //printf("starting main loop now\n");
     glutMainLoop(); //should call after finishing rendering process
     return 0;
 }

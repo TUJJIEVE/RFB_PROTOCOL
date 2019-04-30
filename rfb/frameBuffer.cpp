@@ -77,7 +77,7 @@ void FrameBuffer::setBuffer2(int x, int y, int width, int height)
 void FrameBuffer::queryBuffer(unsigned char * data,Rectangle rect )
 
  {
-        printf("entered getPixels\n");
+        //printf("entered getPixels\n");
         if(init == false){
 
             XDestroyImage(img);

@@ -11,18 +11,8 @@ Client::Client(){
     printf("socket created\n");
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(5093);
-    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    clientAddr.sin_family = AF_INET;
-    clientAddr.sin_port = htons(CLIENT_PORT);
-    printf("client port%d\n",clientAddr.sin_port);
-    clientAddr.sin_addr.s_addr  = htonl(INADDR_ANY);
+    serverAddr.sin_addr.s_addr =htonl(INADDR_ANY);// inet_addr("192.168.1.2"); //htonl(INADDR_ANY);
 
-    if (bind(frameSocket,(sockaddr*)&clientAddr,sizeof(clientAddr)) <0){
-        printf("binding failed\n");        
-        exit(EXIT_FAILURE);
-    }
-    printf("binding sucessfull\n");
-    listen(frameSocket,10);
 }
 
 void Client::setGUI(GUI * gui){
@@ -34,7 +24,7 @@ void Client::setGUI(GUI * gui){
 void Client::sendMessage(KeyEvent key,PointerEvent pointer){
     // Look for mouse and key events ans send these to server
     CliMessage key_pointerEvent;
-
+    printf("Sending messages\n");
     if (isControl){
         if ( key.downFlag == false){
             key_pointerEvent.key.downFlag = false;
@@ -83,7 +73,7 @@ void Client::prepareRectangles(FrameBufferUpdateRequest * buff,int x_start,int y
 
 void Client::bufferRequest(int socket,int x_start,int y_start){
     /// asking for frame buffers periodically
-        printf("buffer request\n");
+        //printf("buffer request\n");
         for (int x=x_start,y=y_start;x<screen_xres ; x+=SI){
             FrameBufferUpdateRequest bufferReq;
             bufferReq.incremental = false;
@@ -104,19 +94,18 @@ void Client::bufferRequest(int socket,int x_start,int y_start){
                 recvCount = recv(socket,((char*)&(response))+(4*totalCount),sizeof(response) - totalCount,0);
                 if (recvCount >0)totalCount += recvCount;
                 if (recvCount == -1) tries++;
+                else if (recvCount ==0) break;
                 if (tries >5) break;
                 printf("Recv %d total %d\n",recvCount,totalCount);
             }
 
             if (tries >5) continue;
-            for (int i=0;i<40000;i++){
-                printf("%c",response.rectangleResponse[0].information[i]);
-            }
+
             {
                 std::unique_lock<std::mutex> l(m);
                 frameQs.push(response);
             }
-            //int recvCount = recv(socket,&response,sizeof(response),0);
+           // int recvCount = recv(socket,&response,sizeof(response),0);
             printf("The recv %d %d\n",totalCount,sizeof(response));
             printf("The number %d\n",response.numRectangles);
 
@@ -128,28 +117,13 @@ void Client::bufferRequest(int socket,int x_start,int y_start){
 }
 
 void Client::askForFrames(){
-    //while (true){
-        printf("Ask for frames\n");
-        //if (shutDown) return;
         for (int i=0;i< ceil(screen_yres/(double)SI);i++ ) bufferRequest(frameBufferSocket,0,i*100);// workers.push_back(std::thread(&Client::bufferRequest,this,frameBufferSocket,0,i*100));
-        //std::this_thread::sleep_for(std::chrono::milliseconds(500));
-//        printf("Finished cycle\n");
-
-    
-
 
 }
 
 
 void Client::setupFrameConnection(){
 
-    printf("setting frame connection\n");
-    sockaddr_in serAddr;
-    int len = sizeof(serAddr);
-    printf("listening from server\n");
-    frameBufferSocket = accept(frameSocket,(sockaddr*)&serverAddr,(socklen_t*)&len);
-    // exchanging the server init messages
-    printf("server connected for frame sending\n");
     ServerInit serverInit;
     int recvCount = 0;
     while (recvCount <=0){
@@ -170,11 +144,47 @@ void Client::setupFrameConnection(){
     pixie.greenMax = serverInit.pf.greenMax;
     maxSize = serverInit.maxReqSize;
     isControl = serverInit.isControl;
-//    printf("%d %d %d %d\n",screen_xres,screen_yres,bitsPerPixel,maxSize);
-    if (isControl) printf("Got the control rights\n");
-    //workers.push_back(std::thread(&Client::askForFrames,this,frameBufferSocket));
-    //if (isControl) workers.push_back(std::thread(&Client::sendMessage,this));
 
+    if (isControl){
+        clientAddr.sin_family = AF_INET;
+        clientAddr.sin_port = htons(CLIENT_PORT);
+        printf("client port%d\n",clientAddr.sin_port);
+        clientAddr.sin_addr.s_addr  =htonl(INADDR_ANY);// inet_addr("192.168.1.1"); //htonl(INADDR_ANY);
+        
+        if (bind(frameSocket,(sockaddr*)&clientAddr,sizeof(clientAddr)) <0){
+            printf("binding failed\n");        
+            exit(EXIT_FAILURE);
+        }
+        printf("binding sucessfull\n");
+        listen(frameSocket,10);
+        printf("setting frame connection\n");
+        sockaddr_in serAddr;
+        int len = sizeof(serAddr);
+        printf("listening from server\n");
+        frameBufferSocket = accept(frameSocket,(sockaddr*)&serverAddr,(socklen_t*)&len);
+        // exchanging the server init messages
+        printf("server connected for frame sending\n");
+
+
+
+    }else{
+        frameBufferSocket = clientSocket; 
+    }
+    if (isControl) printf("Got the control rights\n");
+
+}
+
+void Client::shutitDown(){
+    printf("shutting down\n");
+    shutDown = true;
+    CliMessage shutMessage;
+    shutMessage.isShuttingDown = true;
+    send(clientSocket,&shutMessage,sizeof(shutMessage),0);
+    FrameBufferUpdateRequest shutFrameLine;
+    shutFrameLine.isShuttingDown = true;
+    send(frameBufferSocket,&shutFrameLine,sizeof(shutFrameLine),0);
+    close(clientSocket);
+    close(frameBufferSocket);
 }
 
 void Client::initiateConnection(){
@@ -184,6 +194,7 @@ void Client::initiateConnection(){
         printf("Not able to connect\n");
         exit(EXIT_FAILURE);
     }
+
     printf("connection to server established\n");
     setupFrameConnection();
 

@@ -39,7 +39,7 @@ Server::Server(int freeSocks){
 
 ServerInit Server::prepareInit(int sock){
     ServerInit initMessage;
-    if (sock == firstClient) initMessage.isControl = true;
+    if (!isMutliMode) initMessage.isControl = true;
     else initMessage.isControl = false;
     
     initMessage.pf.bitsPerPix = frameBuffer.vinfo.bits_per_pixel;
@@ -60,28 +60,20 @@ void Server::prepareRect(Rectangle *rect,int numRectangles,uint8_t * buff){
     // read frame buffer and then fill the info into the rectangle object
     std::vector<std::string> response;
     for (int i=0;i<numRectangles;i++){
-        printf("%d %d %d %d\n",rect[i].width,rect[i].height,rect[i].x_position,rect[i].y_position);
         // if possible implement caching mechanism
         // now prepare the rectangles and fill the into the resonse array        
         int size = rect[i].width * rect[i].height * frameBuffer.vinfo.bits_per_pixel/8;
-        printf("Size is %d\n",size);
         //unsigned char buff[size];
         frameBuffer.queryBuffer(buff,rect[i]);
-        //std::string temp = buff;
-        //response.push_back(temp);
-        // for (int i=0;i<40000;i++){
-        //     printf("%c",buff[i]);
-        // }
     }
-    printf("frame sizes %d\n",response.size());
-    //return response;
+
 }
 // Opens another connection just for listening to frame buffer update requests
 int Server::bufferReceiving(int frameSocket){
     int recvCount = 0;
     int sendCount = 0;
     FrameBufferUpdateRequest cliMessage;
-    printf("receiving\n");
+    //printf("receiving\n");
     fcntl(frameSocket,F_SETFL,O_NONBLOCK);
     while (true){
         //printf("recv\n");
@@ -103,12 +95,6 @@ int Server::bufferReceiving(int frameSocket){
                 
                 }
                 else{
-                    //printf("preparing\n");
-                    // send the complete info 
-                    //Rectangle queriedRect(cliMessage.request.x_position,cliMessage.request.y_position,cliMessage.request.width,cliMessage.request.height);
-
-                    //ServerMessage servResponse;//(cliMessage.numRectangles);
-                    //servResponse.buffUpdate.numRectangles = cliMessage.numRectangles;
                     //printf("The number of rectangles to server %d\n",servResponse.buffUpdate.numRectangles);
                     uint8_t frameInfo[40000];
                     //std::vector<std::string> frameInfo = prepareRect(cliMessage.rectangleRequests,cliMessage.numRectangles);
@@ -130,24 +116,22 @@ int Server::bufferReceiving(int frameSocket){
                     // send the responseRect use while loop to ensure complete sending of packets
                     int totalSend = 0;
                     int sendCount = 0;
-                    printf("%d\n",sizeof(response));
-                    for (int i=0;i<40000;i++){
-                        printf("%c",response.rectangleResponse[0].information[i]);
-                    }
+                    //printf("%d\n",sizeof(response));
+                    // for (int i=0;i<40000;i++){
+                    //     printf("%c",response.rectangleResponse[0].information[i]);
+                    // }
                     while (totalSend < sizeof(response)){
                         //printf("sending\n");
                         sendCount = send(frameSocket,((char *)&response) +(4*totalSend),sizeof(response) - totalSend,0 );
                         if (sendCount >0) totalSend += sendCount;
                         //printf("Send %d total %d\n",sendCount,totalSend);
                     }
-                    //sendCount = send(frameSocket,&response,sizeof(response),0);
-                    //printf("sendcount %d %d\n",sendCount,sizeof(response));
-                    //printf("Buffer response done\n");
                 }
             }
         }
 
-    }  
+    }
+    close(frameSocket);  
 }
 
 int Server::frameSending(int connectedSock){
@@ -160,19 +144,23 @@ int Server::frameSending(int connectedSock){
         recvCount = recv(connectedSock,&cliMessage,sizeof(cliMessage),0);
         
         if (recvCount>0){
-            
+            printf("Received key or pointer event\n");
             if (cliMessage.isShuttingDown){
                 // start shutting sequence.
-            
+                printf("shutting down\n");
                 break;
             }
-
+            
             if (cliMessage.key.downFlag){
+                printf("key event happened\n");
                 // key event happened
+                printf("Key pressed is %d\n",cliMessage.key.key);
                 ioDevice.keyPress_release(cliMessage.key.key);
             }
             else if (cliMessage.pointer.isMoved || cliMessage.pointer.isPressed){
                 // Mouse poiner event happened
+                printf("mouse event happened\n");
+                printf("button %d x:%d y:%d\n",cliMessage.pointer.button,cliMessage.pointer.x_position,cliMessage.pointer.y_position);
                 if (cliMessage.pointer.isMoved){
                     ioDevice.moveMouse(cliMessage.pointer.x_position,cliMessage.pointer.y_position);
                 }
@@ -185,13 +173,16 @@ int Server::frameSending(int connectedSock){
 
     }
 
+    close(connectedSock);
+
+
 }
 
 int Server::handshake(int connectedSock,sockaddr_in clientAddr){
     // Initial handshake messages to take place here
     // If it's not the first client then tell the client you are only screen sharing
     int frameSocket = socket(AF_INET,SOCK_STREAM,0);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
     sockaddr_in frameClient;
     frameClient.sin_addr.s_addr = clientAddr.sin_addr.s_addr;
     frameClient.sin_family = clientAddr.sin_family;
@@ -200,10 +191,7 @@ int Server::handshake(int connectedSock,sockaddr_in clientAddr){
     printf("socket %d port %d\n",connectedSock,frameClient.sin_port);
 
     
-    if (connect(frameSocket,(sockaddr*)&frameClient,sizeof(frameClient)) <0) {
-        printf("second connection not able to open\n");
-        return -1;
-    }
+
 
     printf("Second connection established\n");
     ServerInit initMessage = prepareInit(connectedSock);
@@ -212,7 +200,17 @@ int Server::handshake(int connectedSock,sockaddr_in clientAddr){
     while(sendcount<=0){
         sendcount = send(connectedSock,(void *)&initMessage,sizeof(initMessage),0);
     }
-    printf("init %d send %d\n",sizeof(initMessage),sendcount);
+
+    //printf("init %d send %d\n",sizeof(initMessage),sendcount);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    if (initMessage.isControl){
+    if (connect(frameSocket,(sockaddr*)&frameClient,sizeof(frameClient)) <0) {
+        printf("second connection not able to open\n");
+        return -1;
+    }
+    }else{
+        frameSocket = connectedSock;
+    }
     serverJob bufferReqJob = std::bind(&Server::bufferReceiving,this,frameSocket);
     serverJob frameJob = std::bind(&Server::frameSending,this,connectedSock);
     tPool.addJobs(2,frameJob,bufferReqJob);

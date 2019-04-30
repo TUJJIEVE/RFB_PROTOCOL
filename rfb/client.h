@@ -34,6 +34,7 @@ class Client{
         void handleGUIevents(); // function to handle gui
         void setGUI(GUI *);
         void askForFrames();
+        void shutitDown();
         std::queue<FrameBufferUpdate> frameQs;
         Client();
         bool shutDown;
