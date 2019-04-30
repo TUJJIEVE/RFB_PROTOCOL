@@ -27,7 +27,7 @@
 #include "io.h"
 
 using namespace std;
-#define MAX_REQSIZE 400
+#define MAX_REQSIZE 1000
 #define NUM_THREADS 10
 #define SERVER_PORT 5093
 
@@ -44,7 +44,7 @@ class Server{
         int bufferReceiving(int);
         void listenConnections();
     private:
-        std::vector<std::string>  prepareRect(Rectangle *,int);
+        void prepareRect(Rectangle *,int,unsigned char *);
         ServerInit prepareInit(int);
         
         IO ioDevice;
