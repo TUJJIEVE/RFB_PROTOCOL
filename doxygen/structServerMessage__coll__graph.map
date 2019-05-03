@@ -1,0 +1,5 @@
+<map id="ServerMessage" name="ServerMessage">
+<area shape="rect" id="node2" href="$structBell.html" title="Bell" alt="" coords="12,95,56,121"/>
+<area shape="rect" id="node3" href="$structFrameBufferUpdate.html" title="The frame buffer update message that is sent by the server after receiving the frame buffer request..." alt="" coords="81,95,217,121"/>
+<area shape="rect" id="node4" href="$structRectangleInfo.html" title="This structure is used by the server to send to the client the frame buffer information. " alt="" coords="97,5,200,32"/>
+</map>

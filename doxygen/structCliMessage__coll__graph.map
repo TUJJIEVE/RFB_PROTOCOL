@@ -1,0 +1,6 @@
+<map id="CliMessage" name="CliMessage">
+<area shape="rect" id="node2" href="$structPointerEvent.html" title="abstracts pointer events " alt="" coords="5,95,103,121"/>
+<area shape="rect" id="node3" href="$structKeyEvent.html" title="abstracts key event " alt="" coords="127,95,205,121"/>
+<area shape="rect" id="node4" href="$structSetPixelFormat.html" title="SetPixelFormat" alt="" coords="230,95,342,121"/>
+<area shape="rect" id="node5" href="$structPixelFormat.html" title="pixelFormal to represent RGB , RGB_8_8_8 , RGBA as differnt machines may have different formats This ..." alt="" coords="240,5,332,32"/>
+</map>
